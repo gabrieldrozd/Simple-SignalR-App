@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using SignalRSwaggerGen.Attributes;
 
 namespace SignalR.Server.Hubs;
 
@@ -25,6 +26,7 @@ public record Message
         => IsDelivered = true;
 }
 
+[SignalRHub("messages")]
 public class MessageHub : Hub
 {
     private const string UserIdString = "E3EC1513-864C-41E9-8B97-ED746666C9B3";
@@ -41,19 +43,33 @@ public class MessageHub : Hub
         var userId = GetUserId();
         await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
 
-        await Clients
-            .Group(userId.ToString())
-            .SendAsync("ReceiveAllMessages", Messages);
+        await ReceiveAllMessages();
     }
 
     public async Task SendMessage(MessagePayload payload)
     {
         var message = new Message(Guid.NewGuid(), payload.UserId, payload.Content, DateTime.Now);
 
+        Messages.Add(message);
+
+        await ReceiveMessage(message);
+    }
+
+    public async Task ReceiveMessage(Message message)
+    {
+        Messages.Add(message);
         var userId = GetUserId();
         await Clients
             .Group(userId.ToString())
             .SendAsync("ReceiveMessage", message);
+    }
+
+    public async Task ReceiveAllMessages()
+    {
+        var userId = GetUserId();
+        await Clients
+            .Group(userId.ToString())
+            .SendAsync("ReceiveAllMessages", Messages);
     }
 
     public Task MessagesDelivered(List<Guid> messageIds)
