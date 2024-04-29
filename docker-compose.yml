@@ -1,0 +1,17 @@
+﻿networks:
+  signalr-sandbox:
+    name: signalr-sandbox
+
+services:
+  signalr.server:
+    container_name: signalr.server
+    build:
+      context: .
+      dockerfile: SignalR.Server/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5123:8080"
+    networks:
+      - signalr-sandbox
